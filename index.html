@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="it"><head><meta charset="utf-8"><title>ANPS Milano – Turni</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 48 48%27%3E%3Cpath d=%27M24 3 5 10v14c0 11 8 18 19 21 11-3 19-10 19-21V10z%27 fill=%27%231b4f9c%27/%3E%3C/svg%3E">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+:root{--bg:#f4f6fa;--card:#fff;--tx:#1a2233;--mu:#667;--pr:#1b4f9c;--ac:#e8eefb;--bd:#dde3ee;--ok:#1d7a46;--rd:#b3261e;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#10151f;--card:#1a2130;--tx:#e8ecf5;--mu:#9aa5bb;--pr:#7ab0ff;--ac:#22304a;--bd:#2c374d;--ok:#5fd18f;--rd:#ff8a80}}
+:root[data-theme=dark]{--bg:#10151f;--card:#1a2130;--tx:#e8ecf5;--mu:#9aa5bb;--pr:#7ab0ff;--ac:#22304a;--bd:#2c374d;--ok:#5fd18f;--rd:#ff8a80}
+html,body{margin:0;background:var(--bg);color:var(--tx);font:16px system-ui,-apple-system,Segoe UI,sans-serif}
+*{box-sizing:border-box}
+header{background:var(--pr);color:#fff;padding:12px 16px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+:root:not([data-theme=light]) header{color:#10151f}
+header{display:flex;gap:10px;align-items:center}.lg{width:42px;height:42px;border-radius:8px;object-fit:contain;background:#fff;display:block}header h1{margin:0;font-size:18px}header small{opacity:.85}
+nav{display:flex;gap:6px;padding:10px 12px;overflow-x:auto}
+nav button,.btn{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:9px 14px;font-size:15px;cursor:pointer;white-space:nowrap}
+nav button.on,.btn.p{background:var(--pr);color:#fff;border-color:var(--pr)}
+:root:not([data-theme=light]) nav button.on,:root:not([data-theme=light]) .btn.p{color:#10151f}
+.btn.d{color:var(--rd)}main{padding:0 12px 40px;max-width:760px;margin:auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
+.mh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}.mh b{font-size:18px;text-transform:capitalize}
+.g{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.wd{text-align:center;font-size:12px;color:var(--mu)}
+.dy{aspect-ratio:1;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--tx);font-size:15px;position:relative;cursor:pointer;padding:0}
+.dy.sel{outline:2px solid var(--pr)}.dy.td{font-weight:700;color:var(--pr)}.dy.mine{background:var(--ac)}
+.dy i{position:absolute;bottom:3px;left:50%;transform:translateX(-50%);font-size:10px;font-style:normal;color:var(--ok)}
+.dy.emp{visibility:hidden}
+label{display:block;font-size:13px;color:var(--mu);margin:10px 0 4px}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit}
+.row{display:flex;gap:8px}.row>*{flex:1}
+.tag{display:inline-block;background:var(--ac);border-radius:20px;padding:3px 10px;margin:2px;font-size:13px}.tag.me{background:var(--pr);color:#fff}.tag.resp{background:#f5b800;color:#1a2233;font-weight:700;border:2px solid #c48f00}
+.sv{font-weight:700}.mu{color:var(--mu);font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:7px 4px;border-bottom:1px solid var(--bd);text-align:right}th:first-child,td:first-child{text-align:left}
+.sc{overflow-x:auto}.chk{max-height:220px;overflow:auto;border:1px solid var(--bd);border-radius:10px;padding:6px}
+.chk label{display:flex;gap:8px;align-items:center;margin:0;padding:6px;font-size:15px;color:var(--tx)}.chk input{width:auto}
+.hide{display:none}.msg{padding:30px;text-align:center;color:var(--mu)}
+</style></head><body>
+<header><div id="logo"><svg class="lg" viewBox="0 0 48 48"><path d="M24 3 5 10v14c0 11 8 18 19 21 11-3 19-10 19-21V10z" fill="#1b4f9c"/><text x="24" y="29" font-size="11" font-weight="700" fill="#fff" text-anchor="middle" font-family="sans-serif">ANPS</text></svg></div><div><h1>ANPS Milano · Turni volontari</h1><small id="who">Caricamento…</small></div><button class="btn" id="out" style="margin-left:auto;display:none">Esci</button></header>
+<nav id="nav"></nav><main id="app"><div class="msg">Caricamento…</div></main>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const SERV=["Parchi","Protezione Civile","A.S.A.","Rappresentanza","Altro servizio"];
+const MESI=["gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre"];
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pad=n=>String(n).padStart(2,"0"),iso=(y,m,d)=>`${y}-${pad(m+1)}-${pad(d)}`;
+const S={admin:false,me:{name:"",email:""},shifts:[],vols:[],rates:{},raw:[],sa:{},tab:"cal",y:new Date().getFullYear(),m:new Date().getMonth(),sel:iso(new Date().getFullYear(),new Date().getMonth(),new Date().getDate()),mine:false,ry:new Date().getFullYear(),rv:"",db:null,msg:""};
+const ids=snap=>{const o=[];(snap.docs||[]).forEach(d=>o.push({id:d.id,...(d.data?d.data():d)}));return o};
+const hrs=(a,b)=>{const [h1,m1]=a.split(":").map(Number),[h2,m2]=b.split(":").map(Number);let t=(h2*60+m2)-(h1*60+m1);if(t<0)t+=1440;return Math.round(t/60*100)/100};
+const isMine=s=>(s.people||[]).some(p=>(S.me.email&&p.e&&p.e.toLowerCase()===S.me.email.toLowerCase())||(!p.e&&S.me.name&&p.n===S.me.name));
+async function init(){
+  let u=null;try{u=await claude.use("user")}catch(e){}
+  if(u){try{S.admin=await u.isOwner()||await u.canEdit()}catch(e){}try{const m=await u.me();S.me={name:m.name||"",email:m.email||""}}catch(e){}}
+  const db=await claude.use("db").catch(()=>null);S.db=db;
+  if(!db){$("#app").innerHTML='<div class="msg">Accedi con il tuo account per consultare i turni.</div>';$("#who").textContent="Accesso richiesto";return}
+  $("#who").textContent=(S.admin?"Amministratore · ":"Volontario · ")+(S.me.name||S.me.email||"");
+  const mg=()=>{S.shifts=S.raw.map(s=>({...s,...(S.sa[s.id]||{})}));render()};
+  db.collection("shifts").onSnapshot(s=>{S.raw=ids(s);mg()},e=>{S.msg="Errore dati";render()});
+  db.doc("branding/logo").onSnapshot(d=>{const x=(d.data?d.data():d)||{};if(x.id)setLogo(x.id)},()=>{});
+  if(S.admin){
+    db.collection("volunteers").onSnapshot(s=>{S.vols=ids(s).sort((a,b)=>a.n.localeCompare(b.n));render()});
+    db.collection("shiftsAdmin").onSnapshot(s=>{S.sa={};ids(s).forEach(x=>S.sa[x.id]=x);mg()},()=>{});
+    db.doc("config/rates").onSnapshot(d=>{S.rates=(d.data?d.data():{})?.rates||{};render()},()=>{});
+  }
+  render();
+}
+function nav(){const t=[["cal","📅 Calendario"]];if(S.admin)t.push(["add","➕ Nuovo turno"],["vol","👥 Volontari"],["rep","📊 Riepilogo"]);
+  $("#nav").innerHTML=t.map(([k,l])=>`<button class="${S.tab===k?"on":""}" data-t="${k}">${l}</button>`).join("");
+  $("#nav").querySelectorAll("button").forEach(b=>b.onclick=()=>{S.tab=b.dataset.t;render()})}
+function render(){nav();const a=$("#app");if(!S.db)return;
+  if(S.tab==="cal")a.innerHTML=cal();else if(S.admin&&S.tab==="add")a.innerHTML=addF();else if(S.admin&&S.tab==="vol")a.innerHTML=volF();else if(S.admin&&S.tab==="rep")a.innerHTML=rep();
+  bind()}
+function cal(){const f=new Date(S.y,S.m,1),off=(f.getDay()+6)%7,n=new Date(S.y,S.m+1,0).getDate(),td=new Date();
+  const ti=iso(td.getFullYear(),td.getMonth(),td.getDate());const by={};S.shifts.filter(s=>S.admin||s.date>=ti).forEach(s=>(by[s.date]=by[s.date]||[]).push(s));
+  let c='<div class="g">'+["L","M","M","G","V","S","D"].map(d=>`<div class="wd">${d}</div>`).join("")+'<div class="dy emp"></div>'.repeat(off);
+  for(let d=1;d<=n;d++){const k=iso(S.y,S.m,d),l=by[k]||[],m=l.some(isMine);
+    c+=`<button class="dy ${k===S.sel?"sel":""} ${m?"mine":""} ${td.getFullYear()==S.y&&td.getMonth()==S.m&&td.getDate()==d?"td":""}" data-d="${k}">${d}${l.length?`<i>${l.length}●</i>`:""}</button>`}
+  c+='</div>';
+  let day=(by[S.sel]||[]).filter(s=>!S.mine||isMine(s)).sort((a,b)=>a.start.localeCompare(b.start));
+  const [yy,mm,dd]=S.sel.split("-");
+  const list=day.length?day.map(s=>`<div class="card"><div class="sv">${S.admin?esc(s.service)+(s.other?" – "+esc(s.other):""):esc(s.start)+"–"+esc(s.end)}</div><div class="mu">${S.admin?esc(s.start)+"–"+esc(s.end)+" · ":""}${s.hours} h${S.admin?" · "+(s.people||[]).length+" volontari":""}</div><div>${(s.people||[]).map((p,i)=>i==0?`<span class="tag resp">★ ${esc(p.n)} · Responsabile</span>`:`<span class="tag ${isMine({people:[p]})?"me":""}">${esc(p.n)}</span>`).join("")}</div>${S.admin&&s.note?`<div class="mu">${esc(s.note)}</div>`:""}${S.admin?`<button class="btn d" data-del="${s.id}" style="margin-top:8px">Elimina turno</button>`:""}</div>`).join(""):'<div class="msg">Nessun turno in questo giorno</div>';
+  return`<div class="card"><div class="mh"><button class="btn" id="pm">‹</button><b>${MESI[S.m]} ${S.y}</b><button class="btn" id="nm">›</button></div>${c}
+  <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="mine" style="width:auto" ${S.mine?"checked":""}> Mostra solo i miei turni</label></div>
+  <h3>${+dd}/${mm}/${yy}</h3>${list}`}
+function addF(){const so=SERV.map(s=>`<option>${s}</option>`).join("");
+  return`<div class="card"><h3 style="margin-top:0">Nuovo turno</h3>
+  <label>Data</label><input type="date" id="fd" value="${S.sel}">
+  <div class="row"><div><label>Inizio</label><input type="time" id="fs" value="08:00"></div><div><label>Fine</label><input type="time" id="fe" value="12:00"></div></div>
+  <label>Tipo di servizio</label><select id="fv">${so}</select>
+  <div id="oth" class="hide"><label>Specifica altro servizio</label><input id="fo"></div>
+  <label>Volontari (da 1 a 50) – <span id="cnt">0</span> selezionati · il primo selezionato è il responsabile</label><div id="cap" class="sv" style="margin-bottom:6px"></div>
+  <div class="chk" id="fp">${S.vols.length?S.vols.map((v,i)=>`<label><input type="checkbox" value="${i}"> ${esc(v.n)}</label>`).join(""):'<div class="mu">Nessun volontario: aggiungili nella scheda Volontari.</div>'}</div>
+  <label>Note</label><input id="fn">
+  <p class="mu" id="err" style="color:var(--rd)">${esc(S.msg)}</p><button class="btn p" id="save" style="width:100%">Salva turno</button></div>`}
+function volF(){return`<div class="card"><b>Logo ANPS</b><p class="mu">Carica il logo ufficiale (PNG, JPG o SVG): comparirà nell'intestazione per tutti.</p><input type="file" id="lg" accept="image/*"></div><div class="card"><h3 style="margin-top:0">Aggiungi volontario</h3>
+  <label>Nome e cognome</label><input id="vn"><label>Email (username di accesso)</label><input id="ve" type="email">
+  <button class="btn p" id="vadd" style="width:100%;margin-top:12px">Aggiungi all'elenco</button>
+  <p class="mu">Per creare l'accesso di un volontario: Supabase → Authentication → Users → Add user (email e password scelte da te).</p></div>
+  <div class="card"><b>Elenco (${S.vols.length})</b>${S.vols.map(v=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--bd)"><span>${esc(v.n)}<br><span class="mu">${esc(v.e||"")}</span></span><button class="btn d" data-vd="${v.id}">✕</button></div>`).join("")}</div>`}
+function stats(y,vol){const r={},v={};let T={n:0,h:0,e:0};
+  S.shifts.filter(s=>s.date.startsWith(y+"-")).forEach(s=>(s.people||[]).forEach(p=>{if(vol&&p.n!==vol)return;
+    const e=+S.rates[s.service]||0;
+    [[r,s.service],[v,p.n]].forEach(([o,k])=>{o[k]=o[k]||{n:0,h:0,e:0};o[k].n++;o[k].h+=s.hours;o[k].e+=e});T.n++;T.h+=s.hours;T.e+=e}));return{r,v,T}}
+const eur=x=>x.toFixed(2).replace(".",",")+" €",hh=x=>(Math.round(x*100)/100).toString().replace(".",",");
+function rep(){const{r,v,T}=stats(S.ry,S.rv);const yrs=[];for(let y=new Date().getFullYear()+1;y>=2020;y--)yrs.push(y);
+  const tb=(o,t)=>`<div class="sc"><table><tr><th>${t}</th><th>Turni</th><th>Ore</th><th>Rimborso</th></tr>${Object.entries(o).sort().map(([k,x])=>`<tr><td>${esc(k)}</td><td>${x.n}</td><td>${hh(x.h)}</td><td>${eur(x.e)}</td></tr>`).join("")||'<tr><td colspan=4 class="mu">Nessun dato</td></tr>'}</table></div>`;
+  return`<div class="card"><h3 style="margin-top:0">Riepilogo annuale</h3><div class="mu">Anno dal 1 gennaio al 31 dicembre</div>
+  <div class="row"><div><label>Anno</label><select id="ry">${yrs.map(y=>`<option ${y==S.ry?"selected":""}>${y}</option>`).join("")}</select></div>
+  <div><label>Volontario</label><select id="rv"><option value="">Tutti</option>${S.vols.map(x=>`<option ${x.n===S.rv?"selected":""}>${esc(x.n)}</option>`).join("")}</select></div></div>
+  <p><b>Totale:</b> ${T.n} presenze · ${hh(T.h)} ore · rimborso ${eur(T.e)}</p>
+  <button class="btn" id="csv">⬇ Esporta CSV</button></div>
+  <div class="card"><b>Per tipo di servizio</b>${tb(r,"Servizio")}</div>
+  ${rk()}${S.rv?"":`<div class="card"><b>Per volontario</b>${tb(v,"Volontario")}</div>`}
+  <div class="card"><b>Rimborso a servizio (€ per ogni servizio svolto)</b>${SERV.map(s=>`<label>${s}</label><input type="number" step="0.01" min="0" data-rate="${s}" value="${S.rates[s]||0}">`).join("")}<button class="btn p" id="srate" style="width:100%;margin-top:12px">Salva rimborsi</button></div>`}
+function setLogo(id){$("#logo").innerHTML=`<img class="lg" src="${esc(id)}" alt="ANPS">`}
+function rk(){const o=stats(S.ry,"").v;
+  const t=(k,lab)=>`<div class="sc"><table><tr><th>#</th><th>Volontario</th><th>${lab}</th></tr>${Object.entries(o).sort((a,b)=>b[1][k]-a[1][k]||(k=="n"?b[1].h-a[1].h:b[1].n-a[1].n)).slice(0,20).map(([n,x],i)=>`<tr><td>${["🥇","🥈","🥉"][i]||i+1}</td><td>${esc(n)}</td><td>${k=="n"?x.n:hh(x.h)}</td></tr>`).join("")||'<tr><td colspan=3 class="mu">Nessun dato</td></tr>'}</table></div>`;
+  return`<div class="card"><b>🏆 Classifica ${S.ry} · più servizi</b>${t("n","Servizi")}</div><div class="card"><b>🏆 Classifica ${S.ry} · più ore</b>${t("h","Ore")}</div>`}
+function bind(){const q=(s,f)=>{const e=$(s);if(e)e.onclick=f};
+  q("#pm",()=>{S.m--;if(S.m<0){S.m=11;S.y--}render()});q("#nm",()=>{S.m++;if(S.m>11){S.m=0;S.y++}render()});
+  document.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{S.sel=b.dataset.d;render()});
+  const mi=$("#mine");if(mi)mi.onchange=()=>{S.mine=mi.checked;render()};
+  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{if(confirm("Eliminare il turno?")){S.db.doc("shifts/"+b.dataset.del).delete();S.db.doc("shiftsAdmin/"+b.dataset.del).delete()}});
+  document.querySelectorAll("[data-vd]").forEach(b=>b.onclick=()=>{if(confirm("Rimuovere il volontario dall'elenco?"))S.db.doc("volunteers/"+b.dataset.vd).delete()});
+  const lg=$("#lg");if(lg)lg.onchange=async()=>{const f=lg.files[0];if(!f)return;try{const as=await claude.use("assets");const r=await as.upload(f);await S.db.doc("branding/logo").set({id:r.id})}catch(e){alert("Caricamento logo non riuscito")}};
+  const fv=$("#fv");if(fv)fv.onchange=()=>$("#oth").classList.toggle("hide",fv.value!=="Altro servizio");
+  const fp=$("#fp");if(fp){S.ord=[];fp.onchange=e=>{const i=e.target.value;if(e.target.checked){if(S.ord.length>=50){e.target.checked=false;return}S.ord.push(i)}else S.ord=S.ord.filter(x=>x!==i);$("#cnt").textContent=S.ord.length;$("#cap").textContent=S.ord.length?"★ Responsabile: "+S.vols[+S.ord[0]].n:""}}
+  q("#save",async()=>{const c=S.ord.map(i=>S.vols[+i]);
+    const d=$("#fd").value,a=$("#fs").value,b=$("#fe").value;
+    if(!d||!a||!b)return($("#err").textContent="Inserisci data e orari");
+    if(c.length<1||c.length>50)return($("#err").textContent="Seleziona da 1 a 50 volontari");
+    const sv=$("#fv").value;
+    try{const r=await S.db.collection("shifts").add({date:d,start:a,end:b,hours:hrs(a,b),people:c.map(x=>({n:x.n,e:x.e||""}))});await S.db.doc("shiftsAdmin/"+r.id).set({service:sv,other:sv==="Altro servizio"?$("#fo").value.trim():"",note:$("#fn").value.trim()});
+      S.sel=d;S.y=+d.slice(0,4);S.m=+d.slice(5,7)-1;S.tab="cal";S.msg="";render()}catch(e){$("#err").textContent="Salvataggio non riuscito"}});
+  q("#vadd",async()=>{const n=$("#vn").value.trim(),e=$("#ve").value.trim().toLowerCase();if(!n)return;
+    await S.db.collection("volunteers").add({n,e});$("#vn").value="";$("#ve").value=""});
+  const ry=$("#ry");if(ry)ry.onchange=()=>{S.ry=+ry.value;render()};const rv=$("#rv");if(rv)rv.onchange=()=>{S.rv=rv.value;render()};
+  q("#srate",async()=>{const r={};document.querySelectorAll("[data-rate]").forEach(i=>r[i.dataset.rate]=+i.value||0);await S.db.doc("config/rates").set({rates:r});alert("Rimborsi salvati")});
+  q("#csv",async()=>{const dl=await claude.use("downloads").catch(()=>null);if(!dl)return alert("Download non disponibile");
+    const rows=[["Data","Servizio","Volontario","Ore","Rimborso"]];
+    S.shifts.filter(s=>s.date.startsWith(S.ry+"-")).sort((a,b)=>a.date.localeCompare(b.date)).forEach(s=>(s.people||[]).forEach(p=>{if(S.rv&&p.n!==S.rv)return;rows.push([s.date,s.service,p.n,s.hours,(+S.rates[s.service]||0).toFixed(2)])}));
+    try{await dl.save({filename:`riepilogo-ANPS-${S.ry}.csv`,data:rows.map(r=>r.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(";")).join("\n")})}catch(e){}});
+}
+</script>
+<script>
+(async()=>{
+const C=window.APP_CONFIG||{},A=document.getElementById("app");
+if(!C.SUPABASE_URL||/INSERISCI/.test(C.SUPABASE_URL)){A.innerHTML='<div class="msg">Configura <b>config.js</b> con i dati di Supabase (vedi README).</div>';$("#who").textContent="Non configurato";return}
+const sb=supabase.createClient(C.SUPABASE_URL,C.SUPABASE_ANON_KEY);
+const {data:{session}}=await sb.auth.getSession();
+if(!session){$("#who").textContent="Accesso";
+  A.innerHTML='<div class="card"><h3 style="margin-top:0">Accedi</h3><form id="lf"><label>Email (username)</label><input id="le" type="email" autocomplete="username" required><label>Password</label><input id="lp" type="password" autocomplete="current-password" required><p id="lm" class="mu" style="color:var(--rd)"></p><button class="btn p" style="width:100%">Entra</button></form></div>';
+  $("#lf").onsubmit=async e=>{e.preventDefault();const {error}=await sb.auth.signInWithPassword({email:$("#le").value.trim(),password:$("#lp").value});if(error)$("#lm").textContent="Email o password non corretti";else location.reload()};return}
+const {data:pr}=await sb.from("profiles").select("name,role,email").eq("id",session.user.id).maybeSingle();
+const admin=pr?.role==="admin",email=session.user.email,name=pr?.name||email;
+$("#out").style.display="";$("#out").onclick=async()=>{await sb.auth.signOut();location.reload()};
+let L=[];const refresh=()=>L.forEach(f=>f());
+sb.channel("kv").on("postgres_changes",{event:"*",schema:"public",table:"kv"},refresh).subscribe();
+const listen=(q,next,err)=>{const f=async()=>{const r=await q();if(r.error){err&&err(r.error);return}next(r.data)};L.push(f);f();return()=>{L=L.filter(x=>x!==f)}};
+const doc=p=>{const [c,i]=p.split("/");return{
+  onSnapshot:(n,e)=>listen(()=>sb.from("kv").select("data").eq("coll",c).eq("id",i).maybeSingle(),r=>n({data:()=>r?.data}),e),
+  set:async d=>{const {error}=await sb.from("kv").upsert({coll:c,id:i,data:d});if(error)throw error;refresh()},
+  delete:async()=>{const {error}=await sb.from("kv").delete().eq("coll",c).eq("id",i);if(error)throw error;refresh()}}};
+const col=c=>({
+  onSnapshot:(n,e)=>listen(()=>sb.from("kv").select("id,data").eq("coll",c),r=>n({docs:r.map(x=>({id:x.id,data:()=>x.data}))}),e),
+  add:async d=>{const i=crypto.randomUUID();await doc(c+"/"+i).set(d);return{id:i}}});
+const U={isOwner:async()=>admin,canEdit:async()=>admin,me:async()=>({name,email})};
+const DB={doc,collection:col};
+const DL={save:async({filename,data})=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob(["\ufeff"+data],{type:"text/csv;charset=utf-8"}));a.download=filename;a.click()}};
+const AS={upload:async f=>{const p=crypto.randomUUID()+"-"+f.name.replace(/[^\w.]/g,"_");const {error}=await sb.storage.from("assets").upload(p,f);if(error)throw error;return{id:sb.storage.from("assets").getPublicUrl(p).data.publicUrl}}};
+window.claude={use:async n=>({user:U,db:DB,downloads:DL,assets:AS})[n]||null};
+init();
+})();
+</script></body></html>
